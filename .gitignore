@@ -2,3 +2,5 @@ node_modules/
 key/
 *.log
 dist/
+status.json
+logs/

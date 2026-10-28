@@ -1,12 +1,33 @@
-{
-  "mediaBrightness": 50,
-  "idleBrightness": 0,
+﻿{
+  "tvIp": "192.168.1.4",
+  "localAddr": "192.168.1.5",
   "pollIntervalMs": 1000,
-  "treatFullscreenAsMedia": true,
   "restoreOnExit": false,
   "restoreValue": 60,
-  "gameProcesses": [],
-  "mediaProcesses": ["vlc", "mpv", "potplayer", "potplayermini64", "potplayermini", "mpc-hc", "mpc-be", "kmplayer", "smplayer", "kodi", "plex", "emby", "jellyfin", "ffplay", "steam", "wegame", "epicgameslauncher"],
-  "videoTitlePatterns": ["bilibili", "youtube", "netflix", "twitch", "youku", "优酷", "iqiyi", "爱奇艺", "腾讯视频", "芒果tv", "芒果", "douyu", "斗鱼", "huya", "虎牙", "抖音", "快手", "哔哩哔哩", "acfun"],
-  "ignoreFullscreenProcesses": ["explorer", "cmd", "conhost", "powershell", "pwsh", "windowsterminal", "code", "devenv", "taskmgr", "mstsc", "notepad", "wechat", "weixin", "qq", "dingtalk", "wps", "winword", "excel", "powerpnt", "acrobat", "sumatrapdf", "msedge", "chrome", "firefox", "brave", "360se", "360chrome", "qqbrowser", "sogouexplorer"]
+  "rules": [
+    {
+      "name": "游戏",
+      "brightness": 50,
+      "matchFullscreen": true,
+      "processes": [],
+      "titleKeywords": [],
+      "ignoreProcesses": ["explorer", "cmd", "conhost", "powershell", "pwsh", "windowsterminal", "code", "devenv", "taskmgr", "mstsc", "notepad", "wechat", "weixin", "qq", "dingtalk", "wps", "winword", "excel", "powerpnt", "acrobat", "sumatrapdf", "msedge", "chrome", "firefox", "brave"]
+    },
+    {
+      "name": "视频",
+      "brightness": 50,
+      "matchFullscreen": false,
+      "processes": ["vlc", "mpv", "potplayer", "potplayermini64", "potplayermini", "mpc-hc", "mpc-be", "kmplayer", "smplayer", "kodi", "plex", "emby", "jellyfin", "ffplay"],
+      "titleKeywords": ["bilibili", "youtube", "netflix", "twitch", "youku", "优酷", "iqiyi", "爱奇艺", "腾讯视频", "芒果tv", "芒果", "douyu", "斗鱼", "huya", "虎牙", "抖音", "快手", "哔哩哔哩", "acfun"],
+      "ignoreProcesses": []
+    },
+    {
+      "name": "空闲默认",
+      "brightness": 0,
+      "matchFullscreen": false,
+      "processes": [],
+      "titleKeywords": [],
+      "ignoreProcesses": []
+    }
+  ]
 }

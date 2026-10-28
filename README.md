@@ -1,12 +1,26 @@
 # webos-tv-brightness
 
-在 **Windows 电脑**上控制 **LG webOS 电视亮度** 的命令行工具。**不需要 root、不需要在电视上装 app**。
+在 **Windows 电脑**上控制 **LG webOS 电视亮度** 的项目。**不需要 root、不需要在电视上装 app**。
 
 基于 **SSAP 协议 + createAlert 技巧**：电脑通过 WebSocket 连电视（`wss://<ip>:3001`），配对后即可读取/设置/步进调节 `backlight`（OLED Light）。
 
-**内置亮度自动切换**：游戏 / 视频时亮度 50，其他情况亮度 0（OLED 接近黑屏）。常驻后台 + 计划任务开机自启。
+## 框架结构(双进程)
 
-- **适用平台**：Windows（需 Node.js）+ LG webOS TV（已实测 LG OLED55G6PCA / webOS 26 中国版）
+```
+┌──────────────────────┐        ┌──────────────────────────┐
+│  配置 APP(带界面)     │ 写      │  后台服务(无窗口常驻)      │
+│  WebosTVBrightness   │───────►│  tv-brightness-switcher  │
+│  编辑亮度策略/规则    │config  │  轮询前台窗口 → 匹配规则    │
+│  启停服务/看状态      │        │  → 调电视亮度              │
+└──────────────────────┘        └────────────┬─────────────┘
+                                             │ status.json(实时状态)
+```
+
+- **配置 APP**（`app/WebosTVBrightness.exe`，C# WinForms）：**仅用于调整亮度策略**（规则、亮度值、电视连接、服务控制），关闭 APP **不影响**后台服务；
+- **后台服务**（`scripts/tv-brightness-switcher.ps1`，计划任务无窗口常驻）：持续运行，按 `config.json` 规则自动切换亮度，**APP 退出后依然工作**；
+- 两者通过 `config.json`（策略）+ `status.json`（实时状态）通信；服务支持 **config.json 热重载**（改策略无需重启）。
+
+- **适用平台**：Windows（需 Node.js + .NET Framework 4.8）+ LG webOS TV（已实测 LG OLED55G6PCA / webOS 26 中国版）
 - **License**：[MIT](./LICENSE)
 
 ---
@@ -29,7 +43,24 @@ npm install
 
 配对成功后 `client-key` 保存在 `key/client-key.json`（已 gitignore），之后免确认重连。
 
-### 3. 手动控制
+### 3. 使用配置 APP(推荐)
+
+```powershell
+# 编译(首次或改代码后)
+.\app\build.ps1
+
+# 启动配置 APP
+.\app\WebosTVBrightness.exe
+```
+
+APP 界面五分区：
+1. **电视连接**：IP/源地址、重新配对、测试连接；
+2. **亮度规则**：添加/编辑/删除/排序规则（每条 = 匹配条件 + 亮度值），自上而下匹配，第一条命中生效；兜底规则不可删除；
+3. **后台服务**：启动/停止服务、开机自启开关；
+4. **实时状态**：当前前台窗口、命中规则、目标亮度；
+5. **日志**：最近 10 条。
+
+### 4. 手动控制(命令行)
 
 ```powershell
 # 读取当前亮度
@@ -153,21 +184,37 @@ $env:LOCAL_ADDR = '192.168.1.5'
 - **单实例互斥**：已运行时再启动会被拒绝，避免重复轮询。
 - 分类逻辑有单元测试：`.\tools\test-classifier.ps1`（12 个用例全过）。
 
-配置在 `config.json`：
+配置在 `config.json`（**多规则结构**，APP 界面直接编辑）：
 
 ```json
 {
-  "mediaBrightness": 50,
-  "idleBrightness": 0,
+  "tvIp": "192.168.1.4",
+  "localAddr": "192.168.1.5",
   "pollIntervalMs": 1000,
-  "gameProcesses": [],
-  "mediaProcesses": ["vlc", "mpv", "potplayer", "kodi", "..."],
-  "videoTitlePatterns": ["bilibili", "youtube", "爱奇艺", "..."],
-  "ignoreFullscreenProcesses": ["explorer", "chrome", "msedge", "code", "..."]
+  "rules": [
+    {
+      "name": "游戏",
+      "brightness": 50,
+      "matchFullscreen": true,
+      "processes": [],
+      "titleKeywords": [],
+      "ignoreProcesses": ["explorer", "chrome", "msedge", "code", "..."]
+    },
+    {
+      "name": "视频",
+      "brightness": 50,
+      "matchFullscreen": false,
+      "processes": ["vlc", "mpv", "potplayer", "kodi", "..."],
+      "titleKeywords": ["bilibili", "youtube", "爱奇艺", "..."],
+      "ignoreProcesses": []
+    },
+    { "name": "空闲默认", "brightness": 0, "matchFullscreen": false, "processes": [], "titleKeywords": [], "ignoreProcesses": [] }
+  ]
 }
 ```
 
-> 玩游戏就加 `gameProcesses`（如 `["gta5_enhanced", "eldenring"]`）；但通常不需要——全屏检测已覆盖。
+> 规则自上而下匹配，第一条命中生效；条件全空的规则 = 兜底（其他所有情况），不可删除。
+> 服务支持 **config.json 热重载**：APP 保存后无需重启服务，改动立即生效。
 
 ---
 
@@ -175,6 +222,15 @@ $env:LOCAL_ADDR = '192.168.1.5'
 
 ```
 webos-tv-brightness/
+├─ app/                   配置 APP(C# WinForms, 编译成 exe)
+│  ├─ MainForm.cs         主窗口(五分区布局)
+│  ├─ RuleDialog.cs       规则编辑对话框
+│  ├─ ConfigStore.cs      config.json 读写(零第三方依赖)
+│  ├─ ServiceControl.cs   服务启停/自启控制
+│  ├─ StatusReader.cs     status.json 读取
+│  ├─ Program.cs          入口
+│  ├─ build.ps1           编译脚本(csc.exe, /codepage:65001)
+│  └─ WebosTVBrightness.exe  编译产物
 ├─ src/
 │  ├─ ssap-client.js     SSAP 客户端核心(连接/配对/请求,含 client-key 持久化)
 │  ├─ brightness.js      亮度控制(读/写/步进)
