@@ -1,0 +1,12 @@
+{
+  "mediaBrightness": 50,
+  "idleBrightness": 0,
+  "pollIntervalMs": 1000,
+  "treatFullscreenAsMedia": true,
+  "restoreOnExit": false,
+  "restoreValue": 60,
+  "gameProcesses": [],
+  "mediaProcesses": ["vlc", "mpv", "potplayer", "potplayermini64", "potplayermini", "mpc-hc", "mpc-be", "kmplayer", "smplayer", "kodi", "plex", "emby", "jellyfin", "ffplay", "steam", "wegame", "epicgameslauncher"],
+  "videoTitlePatterns": ["bilibili", "youtube", "netflix", "twitch", "youku", "优酷", "iqiyi", "爱奇艺", "腾讯视频", "芒果tv", "芒果", "douyu", "斗鱼", "huya", "虎牙", "抖音", "快手", "哔哩哔哩", "acfun"],
+  "ignoreFullscreenProcesses": ["explorer", "cmd", "conhost", "powershell", "pwsh", "windowsterminal", "code", "devenv", "taskmgr", "mstsc", "notepad", "wechat", "weixin", "qq", "dingtalk", "wps", "winword", "excel", "powerpnt", "acrobat", "sumatrapdf", "msedge", "chrome", "firefox", "brave", "360se", "360chrome", "qqbrowser", "sogouexplorer"]
+}

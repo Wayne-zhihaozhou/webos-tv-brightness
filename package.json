@@ -1,0 +1,16 @@
+{
+  "name": "webos-tv-brightness",
+  "version": "0.1.0",
+  "description": "Control LG webOS TV brightness from Windows PC via SSAP (no root, no TV app)",
+  "main": "src/cli.js",
+  "scripts": {
+    "set": "node src/cli.js set",
+    "get": "node src/cli.js get",
+    "step": "node src/cli.js step",
+    "pair": "node src/cli.js pair"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "license": "MIT"
+}
